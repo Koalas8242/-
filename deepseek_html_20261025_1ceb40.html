@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<title>FitLog Pro · 智能训练与健康记录</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#fff; --primary:#4f46e5; --primary-dark:#4338ca;
+    --text:#111827; --muted:#6b7280; --border:#e5e7eb; --line:#eef1f7;
+    --shadow:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;background:var(--bg);color:var(--text);line-height:1.55;
+    font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom);}
+  .app{max-width:1120px;margin:0 auto;padding:22px 14px 60px;}
+  .header{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px;}
+  .header h1{margin:0;font-size:22px;}
+  .header .sub{margin:2px 0 0;color:var(--muted);font-size:13px;}
+  .toolbar{display:flex;gap:7px;flex-wrap:wrap;}
+
+  .btn{border:none;border-radius:9px;padding:9px 15px;font-size:13.5px;font-family:inherit;
+    cursor:pointer;transition:background .15s,transform .08s;white-space:nowrap;}
+  .btn:active{transform:scale(.97);}
+  .btn.primary{background:var(--primary);color:#fff;font-weight:600;}
+  .btn.primary:hover{background:var(--primary-dark);}
+  .btn.ghost{background:#eef2f9;color:#475569;}
+  .btn.ghost:hover{background:#e2e8f0;}
+  .btn.small{padding:7px 12px;font-size:13px;}
+  .btn.danger{color:#dc2626;}
+  .btn.danger:hover{background:#fee2e2;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  .tabs{display:flex;gap:4px;background:#e9edf6;padding:4px;border-radius:12px;margin-bottom:18px;overflow-x:auto;}
+  .tabs button{flex:1;min-width:58px;border:none;background:transparent;padding:9px 8px;border-radius:9px;
+    font-size:13px;font-family:inherit;color:#5b6478;cursor:pointer;transition:.15s;white-space:nowrap;}
+  .tabs button.active{background:#fff;color:var(--primary);font-weight:600;box-shadow:0 1px 3px rgba(16,24,40,.08);}
+  .view{display:none;}
+  .view.active{display:block;animation:fade .22s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .card{background:var(--card);border-radius:16px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .card h2{margin:0 0 14px;font-size:15px;font-weight:600;}
+  .card h2 .hint{font-weight:400;color:#9ca3af;font-size:12px;margin-left:6px;}
+
+  .metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;}
+  .metric{background:var(--card);border-radius:14px;padding:14px 15px;box-shadow:var(--shadow);border-left:3px solid var(--primary);}
+  .m-label{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);margin-bottom:4px;}
+  .m-val{font-size:23px;font-weight:700;line-height:1.2;}
+  .m-unit{font-size:12px;color:var(--muted);margin-left:3px;font-weight:400;}
+  .m-sub{font-size:11.5px;color:#9ca3af;margin-top:2px;}
+
+  .field{display:flex;flex-direction:column;gap:4px;margin-bottom:11px;}
+  .field > span{font-size:12px;color:var(--muted);}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  .field-row.three{grid-template-columns:1fr 1fr 1fr;}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;font-size:14px;
+    font-family:inherit;color:var(--text);background:#fff;outline:none;transition:border-color .15s,box-shadow .15s;}
+  input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.13);}
+  textarea{resize:vertical;min-height:52px;}
+
+  .entries-head{display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px;font-size:13px;color:var(--muted);font-weight:600;}
+  .entry{border:1px solid #e9edf5;border-radius:12px;padding:10px 11px;background:#fafbff;margin-bottom:9px;}
+  .entry-head{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+  .entry-head .e-name{flex:1;min-width:120px;}
+  .entry-head .e-dim{width:110px;flex:0 0 auto;padding:9px 5px;font-size:13px;}
+  .entry-head .e-type{width:110px;flex:0 0 auto;padding:9px 5px;font-size:13px;}
+  .e-del{flex:0 0 auto;border:none;background:transparent;color:#9ca3af;cursor:pointer;font-size:15px;
+    padding:6px 8px;border-radius:8px;transition:.15s;}
+  .e-del:hover{background:#fee2e2;color:#dc2626;}
+  .fgroup{display:none;gap:7px;flex-wrap:wrap;margin-top:9px;}
+  .fgroup.active{display:flex;}
+  .fgroup label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);flex:1;min-width:62px;}
+  .fgroup label input,.fgroup label select{padding:7px 9px;font-size:13px;}
+  .fgroup > input[type=text]{flex:1;font-size:13px;}
+  .last-ref{display:none;font-size:12px;color:#6b7280;margin-top:8px;padding:6px 9px;
+    background:#f0f9ff;border-radius:8px;border-left:2px solid #38bdf8;}
+
+  .pref-panel{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .pref-chip{font-size:12px;padding:4px 11px;border-radius:999px;background:#eef2ff;color:#4338ca;cursor:pointer;border:1px solid transparent;transition:.15s;}
+  .pref-chip:hover{background:#e0e7ff;border-color:#c7d2fe;}
+  .pref-chip .cnt{opacity:.6;margin-left:3px;font-size:11px;}
+
+  .list-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .list-head h2{margin:0;}
+  .list-head select{width:auto;padding:7px 11px;font-size:13px;}
+  .day-group{margin-bottom:18px;}
+  .day-head{display:flex;gap:9px;align-items:baseline;padding-bottom:8px;font-size:13px;font-weight:600;color:#374151;flex-wrap:wrap;}
+  .day-meta{font-weight:400;color:#9ca3af;font-size:12px;}
+  .session{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;}
+  .session + .session{margin-top:9px;}
+  .session-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+  .session-title{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .session-title strong{font-size:14px;font-weight:600;}
+  .cat{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;}
+  .cat-0{background:#fff7ed;color:#c2410c;} .cat-1{background:#eff6ff;color:#1d4ed8;} .cat-2{background:#ecfdf5;color:#047857;}
+  .session-actions{display:flex;gap:2px;flex:0 0 auto;}
+  .icon-btn{border:none;background:transparent;cursor:pointer;font-size:14px;padding:5px 6px;border-radius:7px;opacity:.5;transition:.15s;}
+  .icon-btn:hover{opacity:1;background:#f1f5f9;}
+  .entry-list-view{list-style:none;margin:8px 0 0;padding:0;}
+  .entry-list-view li{display:flex;gap:12px;padding:4px 0;font-size:13px;border-bottom:1px dashed #f1f5f9;flex-wrap:wrap;}
+  .entry-list-view li:last-child{border-bottom:none;}
+  .ex-name{color:#374151;min-width:88px;font-weight:500;}
+  .ex-data{color:#6b7280;}
+  .pr-mark{color:#b45309;font-weight:600;font-size:12px;margin-left:4px;}
+  .session-note{margin:8px 0 0;font-size:12px;color:#9ca3af;}
+  .session-extra{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;}
+  .chip{font-size:11.5px;padding:2px 8px;border-radius:999px;background:#f1f5f9;color:#475569;}
+  .partners-chip{font-size:11.5px;padding:2px 8px;border-radius:999px;background:#fdf2f8;color:#be185d;}
+  .empty{color:#9ca3af;text-align:center;padding:28px 0;margin:0;font-size:13.5px;}
+
+  .photo-upload-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .photo-hint{font-size:12px;color:#9ca3af;}
+  .photo-preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:10px;}
+  .photo-preview:empty{display:none;}
+  .photo-item{position:relative;border-radius:10px;overflow:hidden;background:#f1f5f9;display:flex;flex-direction:column;}
+  .photo-item img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:pointer;}
+  .photo-del{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;
+    background:rgba(0,0,0,.6);color:#fff;border:none;font-size:12px;cursor:pointer;line-height:1;
+    display:flex;align-items:center;justify-content:center;}
+  .photo-del:hover{background:rgba(220,38,38,.9);}
+  .photo-caption{border:none;border-top:1px solid #e5e7eb;border-radius:0;padding:5px 7px;font-size:11px;
+    width:100%;background:#fff;outline:none;}
+  .photo-caption:focus{box-shadow:inset 0 0 0 2px rgba(79,70,229,.2);}
+
+  .session-photos{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+  .session-photos .thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;cursor:pointer;
+    border:1px solid #e5e7eb;transition:.15s;}
+  .session-photos .thumb:hover{transform:scale(1.05);border-color:var(--primary);}
+  .session-photos .more{width:56px;height:56px;border-radius:8px;background:#f1f5f9;color:#6b7280;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+
+  .timeline-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+  .filter-chip{font-size:12px;padding:5px 12px;border-radius:999px;background:#eef2f9;
+    color:#475569;cursor:pointer;border:1px solid transparent;transition:.15s;}
+  .filter-chip.active{background:#4f46e5;color:#fff;}
+  .timeline-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+  .timeline-card{border-radius:12px;overflow:hidden;background:#f8fafc;cursor:pointer;
+    border:1px solid #e5e7eb;transition:.15s;}
+  .timeline-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(16,24,40,.08);}
+  .timeline-card img{width:100%;aspect-ratio:1;object-fit:cover;display:block;}
+  .timeline-card .tc-info{padding:7px 9px;font-size:11.5px;color:#6b7280;line-height:1.4;}
+  .timeline-card .tc-date{color:#374151;font-weight:600;font-size:12px;}
+  .timeline-card .tc-caption{font-size:11px;color:#9ca3af;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  .photo-viewer{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:200;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:20px;opacity:0;pointer-events:none;transition:.2s;}
+  .photo-viewer.show{opacity:1;pointer-events:auto;}
+  .pv-img-wrap{flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:0;}
+  .pv-img-wrap img{max-width:100%;max-height:72vh;object-fit:contain;border-radius:8px;}
+  .pv-close{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;
+    background:rgba(255,255,255,.15);color:#fff;border:none;font-size:18px;cursor:pointer;}
+  .pv-close:hover{background:rgba(255,255,255,.3);}
+  .pv-prev,.pv-next{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;
+    border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:22px;cursor:pointer;}
+  .pv-prev{left:16px;} .pv-next{right:16px;}
+  .pv-prev:hover,.pv-next:hover{background:rgba(255,255,255,.3);}
+  .pv-prev[disabled],.pv-next[disabled]{opacity:.2;cursor:not-allowed;}
+  .pv-info{color:#fff;text-align:center;padding:14px 20px 6px;max-width:640px;}
+  .pv-caption{font-size:14px;font-weight:500;margin-bottom:4px;min-height:20px;}
+  .pv-meta{font-size:12px;color:rgba(255,255,255,.65);}
+  .pv-counter{font-size:11px;color:rgba(255,255,255,.5);margin-top:4px;}
+
+  .ai-output{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;font-size:13.5px;line-height:1.75;white-space:pre-wrap;min-height:120px;}
+  .ai-output.loading{color:#9ca3af;}
+  .ai-config{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  @media (max-width:640px){.ai-config{grid-template-columns:1fr;}}
+
+  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
+    background:#111827;color:#fff;padding:11px 20px;border-radius:11px;font-size:13.5px;
+    opacity:0;pointer-events:none;transition:.28s;z-index:220;max-width:86vw;text-align:center;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+
+  .note-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:11px;padding:12px 14px;font-size:12.5px;color:#0369a1;line-height:1.6;margin-bottom:14px;}
+
+  .rest-float{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);
+    background:#111827;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;
+    z-index:110;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+  .rest-float strong{font-size:18px;font-variant-numeric:tabular-nums;}
+
+  .trend-ts-item{background:#f8fafc;border-radius:10px;padding:10px;text-align:center;}
+
+  #bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:none;
+    border-top:1px solid #e5e7eb;padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:100;}
+  #bottom-nav button{flex:1;border:none;background:transparent;display:flex;flex-direction:column;
+    align-items:center;gap:2px;font-size:11px;color:#6b7280;cursor:pointer;padding:4px 0;font-family:inherit;}
+  #bottom-nav button.active{color:var(--primary);font-weight:600;}
+  #bottom-nav button span{font-size:19px;}
+
+  .sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:130;display:flex;align-items:flex-end;}
+  .sheet{background:#fff;border-radius:16px 16px 0 0;padding:18px;width:100%;animation:slideUp .25s ease;}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
+
+  @media (max-width:720px){
+    .field-row.three{grid-template-columns:1fr 1fr;}
+    .header{align-items:flex-start;}
+    .entry-head .e-dim,.entry-head .e-type{width:100%;}
+    .tabs{display:none;}
+    #bottom-nav{display:flex;}
+    .app{padding-bottom:90px;}
+    .toast{bottom:90px;}
+    .timeline-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
+  }
+  @media (max-width:480px){.field-row{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <div>
+      <h1>⚡ FitLog Pro</h1>
+      <p class="sub">训练记录 · PR 追踪 · 时光相册 · AI 分析</p>
+    </div>
+    <div class="toolbar">
+      <button id="btn-export" class="btn ghost small">导出</button>
+      <label class="btn ghost small" style="cursor:pointer;">导入<input type="file" id="file-import" accept=".json" hidden></label>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-view="today" class="active">今日</button>
+    <button data-view="train">训练</button>
+    <button data-view="health">健康</button>
+    <button data-view="trend">趋势</button>
+    <button data-view="timeline">时光</button>
+    <button data-view="ai">AI 分析</button>
+    <button data-view="knowledge">知识</button>
+    <button data-view="settings">设置</button>
+  </nav>
+
+  <section class="view active" id="view-today">
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+      <h2 style="margin:0;" id="today-title">今日概览</h2>
+      <button id="today-edit" class="btn ghost small">编辑今日数据</button>
+    </div>
+    <div class="metrics" id="today-metrics"></div>
+    <div class="card" style="margin-top:16px;">
+      <h2>今日训练 <span class="hint" id="today-sessions-count"></span></h2>
+      <div id="today-sessions"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-train">
+    <form id="session-form" class="card" autocomplete="off">
+      <h2 id="session-form-title">记录训练</h2>
+      <div class="field-row">
+        <label class="field"><span>日期</span><input type="date" id="f-date" required></label>
+        <label class="field"><span>训练分类</span>
+          <select id="f-category">
+            <option value="体能训练">🔥 体能训练</option>
+            <option value="专项训练">🎯 专项训练</option>
+            <option value="恢复放松">🧘 恢复放松</option>
+          </select>
+        </label>
+      </div>
+      <label class="field"><span>训练主题（可选）</span>
+        <input type="text" id="f-title" maxlength="30" placeholder="如：上肢推 / 投篮练习 / 泡沫轴放松">
+      </label>
+      <label class="field"><span>训练搭子（可选，逗号分隔）</span>
+        <input type="text" id="f-partners" maxlength="50" placeholder="如：张三, 李四">
+      </label>
+      <div class="entries-head">
+        <span>动作明细</span>
+        <button type="button" id="add-entry" class="btn ghost small">+ 添加动作</button>
+      </div>
+      <div id="entry-list"></div>
+      <div class="pref-panel" id="pref-panel"></div>
+      <div class="field-row" style="margin-top:12px;">
+        <label class="field"><span>训练平均心率（bpm）</span><input type="number" id="f-hr" min="0" max="250" placeholder="如 132"></label>
+        <label class="field"><span>训练消耗（kcal）</span><input type="number" id="f-cal" min="0" placeholder="如 380"></label>
+      </div>
+      <label class="field"><span>整体备注（可选）</span>
+        <input type="text" id="f-note" maxlength="100" placeholder="状态、体感、重量记录…">
+      </label>
+      <div class="field">
+        <span>训练照片 · 记录美好时光</span>
+        <div class="photo-upload-row">
+          <label class="btn ghost small" style="cursor:pointer;">
+            📷 拍照 / 选择
+            <input type="file" id="photo-input" accept="image/*" multiple hidden>
+          </label>
+          <span class="photo-hint" id="photo-count">0 / 5</span>
+        </div>
+        <div class="photo-preview" id="photo-preview"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
+        <button type="submit" id="submit-btn" class="btn primary">保存训练</button>
+        <button type="button" id="cancel-edit" class="btn ghost" hidden>取消编辑</button>
+        <button type="button" id="save-template" class="btn ghost small">保存为模板</button>
+        <select id="template-select" style="width:auto;padding:7px 11px;font-size:13px;">
+          <option value="">从模板创建…</option>
+        </select>
+      </div>
+    </form>
+
+    <div class="card">
+      <div class="list-head">
+        <h2>训练记录</h2>
+        <select id="filter-category">
+          <option value="all">全部分类</option>
+          <option value="体能训练">体能训练</option>
+          <option value="专项训练">专项训练</option>
+          <option value="恢复放松">恢复放松</option>
+        </select>
+      </div>
+      <div id="session-list"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-health">
+    <form id="daily-form" class="card" autocomplete="off">
+      <h2 id="daily-form-title">每日健康数据</h2>
+      <div class="field-row">
+        <label class="field"><span>日期</span><input type="date" id="d-date" required></label>
+        <label class="field"><span>体重（kg）</span><input type="number" id="d-weight" min="0" step="0.1" placeholder="如 70.5"></label>
+      </div>
+      <div class="field-row three">
+        <label class="field"><span>静息心率</span><input type="number" id="d-hrRest" min="0" max="200" placeholder="bpm"></label>
+        <label class="field"><span>平均心率</span><input type="number" id="d-hrAvg" min="0" max="220" placeholder="bpm"></label>
+        <label class="field"><span>最高心率</span><input type="number" id="d-hrMax" min="0" max="230" placeholder="bpm"></label>
+      </div>
+      <div class="field-row three">
+        <label class="field"><span>活动消耗</span><input type="number" id="d-calActive" min="0" placeholder="kcal"></label>
+        <label class="field"><span>总消耗</span><input type="number" id="d-calTotal" min="0" placeholder="kcal"></label>
+        <label class="field"><span>步数</span><input type="number" id="d-steps" min="0" placeholder="步"></label>
+      </div>
+      <div class="field-row three">
+        <label class="field"><span>睡眠（小时）</span><input type="number" id="d-sleep" min="0" max="24" step="0.1" placeholder="如 7.5"></label>
+        <label class="field"><span>深睡（小时）</span><input type="number" id="d-sleepDeep" min="0" max="24" step="0.1" placeholder="可选"></label>
+        <label class="field"><span>恢复放松（分钟）</span><input type="number" id="d-rest" min="0" placeholder="如 30"></label>
+      </div>
+      <div class="field-row">
+        <label class="field"><span>饮食摄入（kcal）</span><input type="number" id="d-calIntake" min="0" placeholder="可选"></label>
+        <label class="field"><span>数据来源</span>
+          <select id="d-source">
+            <option value="manual">手动记录</option>
+            <option value="apple">Apple 健康</option>
+            <option value="xiaomi">小米运动健康</option>
+            <option value="device">智能设备</option>
+          </select>
+        </label>
+      </div>
+      <label class="field"><span>备注</span><textarea id="d-note" maxlength="150" placeholder="身体感受、状态…"></textarea></label>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button type="submit" class="btn primary">保存健康数据</button>
+        <button type="button" id="daily-clear" class="btn ghost">清空表单</button>
+      </div>
+    </form>
+    <div class="card"><h2>健康记录</h2><div id="daily-list"></div></div>
+  </section>
+
+  <section class="view" id="view-trend">
+    <div class="card">
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;">
+        <select id="trend-metric">
+          <option value="hrRest">静息心率</option>
+          <option value="hrAvg">平均心率</option>
+          <option value="steps" selected>步数</option>
+          <option value="sleep">睡眠时长</option>
+          <option value="calActive">活动消耗</option>
+          <option value="weight">体重</option>
+          <option value="trainCount">训练次数</option>
+          <option value="trainSets">训练组数</option>
+          <option value="trainVolume">训练容量</option>
+          <option value="exercise">动作 e1RM（选动作）</option>
+        </select>
+        <select id="trend-range">
+          <option value="7">最近 7 天</option>
+          <option value="14" selected>最近 14 天</option>
+          <option value="30">最近 30 天</option>
+          <option value="90">最近 90 天</option>
+        </select>
+        <select id="trend-exercise" style="display:none;width:auto;padding:7px 11px;font-size:13px;"></select>
+      </div>
+      <canvas id="trend-canvas" style="width:100%;height:220px;display:block;"></canvas>
+      <div id="trend-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-timeline">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+        <h2 style="margin:0;">📸 训练时光 <span class="hint" id="timeline-count"></span></h2>
+        <span class="photo-hint" id="timeline-storage"></span>
+      </div>
+      <div class="timeline-toolbar" id="timeline-filters"></div>
+      <div class="timeline-grid" id="timeline-grid"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-ai">
+    <div class="card">
+      <h2>AI 训练分析</h2>
+      <div class="note-box">
+        填写你的 API Key（仅保存在本机 localStorage）。AI 将结合训练、心率、睡眠、恢复数据，以及每日训练科学动态，生成分析报告。
+      </div>
+      <div class="ai-config">
+        <label class="field"><span>API Endpoint（OpenAI 兼容）</span>
+          <input type="text" id="ai-endpoint" placeholder="https://api.openai.com/v1/chat/completions">
+        </label>
+        <label class="field"><span>API Key</span>
+          <input type="password" id="ai-key" placeholder="sk-...">
+        </label>
+        <label class="field"><span>模型</span>
+          <input type="text" id="ai-model" value="gpt-4o-mini">
+        </label>
+        <label class="field"><span>分析范围</span>
+          <select id="ai-range">
+            <option value="7">最近 7 天</option>
+            <option value="14" selected>最近 14 天</option>
+            <option value="30">最近 30 天</option>
+          </select>
+        </label>
+      </div>
+      <label class="field"><span>分析焦点（可选）</span>
+        <input type="text" id="ai-focus" placeholder="如：我的下肢力量是否有进步？">
+      </label>
+      <div style="display:flex;gap:10px;margin:6px 0 14px;">
+        <button id="ai-run" class="btn primary">生成分析</button>
+        <button id="ai-save-key" class="btn ghost small">保存 Key</button>
+      </div>
+      <div id="ai-output" class="ai-output">点击"生成分析"，AI 将基于你的训练与健康数据给出报告。</div>
+    </div>
+    <div class="card">
+      <h2>历史分析</h2>
+      <div id="ai-history"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-knowledge">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;">
+        <h2 style="margin:0;">📚 训练科学动态</h2>
+        <button id="knowledge-refresh" class="btn ghost small">刷新</button>
+      </div>
+      <div class="note-box">
+        从 Stronger by Science、PubMed、ACSM 等来源拉取最新训练科学资讯。RSS 通过公共代理访问，如网络受限可能失败。
+      </div>
+      <div id="knowledge-list"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-settings">
+    <div class="card">
+      <h2>训练偏好</h2>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 12px;">系统根据动作使用频率自动学习。</p>
+      <div id="settings-pref" class="pref-panel"></div>
+    </div>
+    <div class="card">
+      <h2>自定义动作库</h2>
+      <div class="field-row" style="align-items:flex-end;">
+        <label class="field" style="margin-bottom:0;"><span>动作名称</span><input type="text" id="custom-ex-name" placeholder="如：地雷管推举"></label>
+        <label class="field" style="margin-bottom:0;"><span>所属维度</span>
+          <select id="custom-ex-dim">
+            <option value="力量">力量</option><option value="有氧">有氧</option>
+            <option value="柔韧">柔韧</option><option value="平衡">平衡</option>
+            <option value="爆发力">爆发力</option>
+          </select>
+        </label>
+      </div>
+      <button id="custom-ex-add" class="btn primary small" style="margin-top:10px;">添加动作</button>
+      <div id="custom-ex-list" style="margin-top:12px;"></div>
+    </div>
+    <div class="card">
+      <h2>数据管理</h2>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button id="btn-export2" class="btn ghost small">导出全部数据</button>
+        <button id="btn-clear" class="btn ghost small danger">清空全部数据</button>
+      </div>
+      <p style="font-size:12.5px;color:#9ca3af;margin:12px 0 0;" id="storage-info"></p>
+    </div>
+  </section>
+</div>
+
+<nav id="bottom-nav">
+  <button data-view="today" class="active"><span>📅</span>今日</button>
+  <button data-view="train"><span>🏋️</span>训练</button>
+  <button data-view="timeline"><span>📸</span>时光</button>
+  <button data-view="more"><span>⋯</span>更多</button>
+</nav>
+
+<div class="photo-viewer" id="photo-viewer">
+  <button class="pv-close" id="pv-close">✕</button>
+  <button class="pv-prev" id="pv-prev">‹</button>
+  <button class="pv-next" id="pv-next">›</button>
+  <div class="pv-img-wrap"><img id="pv-img" alt=""></div>
+  <div class="pv-info">
+    <div class="pv-caption" id="pv-caption"></div>
+    <div class="pv-meta" id="pv-meta"></div>
+    <div class="pv-counter" id="pv-counter"></div>
+  </div>
+</div>
+
+<datalist id="exercise-suggestions"></datalist>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+'use strict';
+
+// ============ 基础工具 ============
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const pad = n => String(n).padStart(2, '0');
+const toDateStr = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const todayStr = () => toDateStr(new Date());
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return toDateStr(d);
+}
+function numOrNull(v) {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+const val = v => (v === null || v === undefined) ? '' : v;
+function fmt(n, d = 0) {
+  if (n === null || n === undefined || Number.isNaN(n)) return '—';
+  return d ? Number(n).toFixed(d) : Math.round(n).toLocaleString();
+}
+function toast(msg, ms = 2200) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), ms);
+}
+function download(name, content, type = 'application/json') {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function hexA(hex, a) {
+  const h = hex.replace('#', '');
+  return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`;
+}
+function daysAgo(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const diff = Math.round((now - d) / 86400000);
+  if (diff === 0) return '今天';
+  if (diff === 1) return '昨天';
+  if (diff < 7) return `${diff} 天前`;
+  return dateStr.slice(5);
+}
+
+// ============ 常量 ============
+const DIMENSIONS = [
+  { key: '力量',   icon: '🏋️' },
+  { key: '有氧',   icon: '🏃' },
+  { key: '爆发力', icon: '💥' },
+  { key: '柔韧',   icon: '🧘' },
+  { key: '平衡',   icon: '⚖️' }
+];
+
+const EXERCISE_LIBRARY = {
+  '力量': {
+    '胸部': ['杠铃卧推', '哑铃卧推', '上斜卧推', '双杠臂屈伸', '绳索夹胸', '俯卧撑'],
+    '背部': ['引体向上', '杠铃划船', '高位下拉', '坐姿划船', '硬拉', '直臂下压'],
+    '肩部': ['杠铃肩推', '哑铃侧平举', '俯身飞鸟', '面拉', '阿诺德推举'],
+    '腿部': ['深蹲', '腿举', '保加利亚分腿蹲', '罗马尼亚硬拉', '腿弯举', '提踵'],
+    '手臂': ['杠铃弯举', '哑铃弯举', '三头下压', '窄距卧推', '锤式弯举'],
+    '核心': ['平板支撑', '卷腹', '悬垂举腿', '俄罗斯转体', '健腹轮']
+  },
+  '有氧': {
+    '稳态有氧': ['慢跑', '快走', '骑行', '游泳', '椭圆机', '划船机'],
+    '间歇有氧': ['HIIT', '冲刺跑', '跳绳间歇', '波比跳', '战绳']
+  },
+  '爆发力': {
+    '举重派生': ['高翻', '抓举', '悬垂高翻', '借力推举'],
+    '跳跃类': ['箱式跳跃', '深蹲跳', '立定跳远', '跳绳双摇'],
+    '投掷类': ['药球砸地', '药球侧抛', '壶铃摇摆']
+  },
+  '柔韧': {
+    '静态拉伸': ['腘绳肌拉伸', '股四头肌拉伸', '胸大肌拉伸', '肩部拉伸', '髋屈肌拉伸'],
+    '动态拉伸': ['腿摆', '弓步走', '手臂绕环', '猫牛式'],
+    '筋膜放松': ['泡沫轴放松', '筋膜球放松', '按摩棒放松']
+  },
+  '平衡': {
+    '静态平衡': ['单腿站立', '闭眼单腿站立', '树式'],
+    '动态平衡': ['平衡垫训练', 'BOSU球训练', '倒退走', '踮脚走']
+  }
+};
+
+const CATEGORIES = [
+  { value: '体能训练', icon: '🔥', cls: 'cat-0' },
+  { value: '专项训练', icon: '🎯', cls: 'cat-1' },
+  { value: '恢复放松', icon: '🧘', cls: 'cat-2' }
+];
+const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.value, c]));
+
+const ENTRY_TYPES = [
+  { value: 'strength', label: '力量' },
+  { value: 'cardio',   label: '有氧' },
+  { value: 'timed',    label: '计时' },
+  { value: 'freestyle',label: '自由' }
+];
+
+const RIR_SCALE = [
+  { value: 5, label: 'RIR 5' }, { value: 4, label: 'RIR 4' },
+  { value: 3, label: 'RIR 3' }, { value: 2, label: 'RIR 2' },
+  { value: 1, label: 'RIR 1' }, { value: 0, label: 'RIR 0 力竭' }
+];
+
+const METRIC_META = {
+  hrRest:      { label: '静息心率', unit: 'bpm', color: '#e11d48' },
+  hrAvg:       { label: '平均心率', unit: 'bpm', color: '#f43f5e' },
+  steps:       { label: '步数',     unit: '步',  color: '#2563eb' },
+  sleep:       { label: '睡眠',     unit: '小时', color: '#7c3aed' },
+  calActive:   { label: '活动消耗', unit: 'kcal', color: '#ea580c' },
+  weight:      { label: '体重',     unit: 'kg',  color: '#0891b2' },
+  trainCount:  { label: '训练次数', unit: '次',  color: '#4f46e5' },
+  trainSets:   { label: '训练组数', unit: '组',  color: '#7c3aed' },
+  trainVolume: { label: '训练容量', unit: 'kg',  color: '#0f766e' },
+  exercise:    { label: '动作 e1RM', unit: 'kg', color: '#0891b2' }
+};
+
+const KNOWLEDGE_FEEDS = [
+  { name: 'Stronger by Science', url: 'https://www.strongerbyscience.com/feed/', category: '实践' },
+  { name: 'PubMed Sports Med', url: 'https://pubmed.ncbi.nlm.nih.gov/?term=sports+medicine+resistance+training&format=rss', category: '研究' }
+];
+
+// ============ 存储键 ============
+const STORE_KEY = 'fitlog-v5';
+const PREF_KEY = 'fitlog-pref-v1';
+const CUSTOM_KEY = 'fitlog-custom-ex-v1';
+const AI_SETTINGS_KEY = 'fitlog-ai-settings';
+const TEMPLATE_KEY = 'fitlog-templates-v1';
+const DRAFT_KEY = 'fitlog-draft-v2';
+const KNOWLEDGE_CACHE_KEY = 'fitlog-knowledge-v1';
+const AI_HISTORY_KEY = 'fitlog-ai-history-v1';
+const CURRENT_VERSION = 5;
+const MAX_PHOTOS_PER_SESSION = 5;
+
+// ============ 状态 ============
+const store = {
+  state: { sessions: [], daily: {}, hrLog: [] },
+  pref: { dimCount: {}, exCount: {}, lastUsed: {} },
+  customExercises: {},
+  templates: [],
+  aiHistory: [],
+  knowledge: { entries: [], lastFetched: null, unread: 0 }
+};
+
+const pendingPhotos = new Map();
+let editingId = null;
+let draftTimer = null;
+let timelineFilter = 'all';
+let viewerList = [], viewerIdx = 0;
+
+// ============ 数据存储 ============
+function blankDaily(date) {
+  return {
+    date, hrRest: null, hrAvg: null, hrMax: null, calActive: null, calTotal: null,
+    steps: null, sleep: null, sleepDeep: null, rest: null, weight: null,
+    calIntake: null, note: '', source: 'manual'
+  };
+}
+function getDaily(date, create = false) {
+  if (!store.state.daily[date]) {
+    if (!create) return null;
+    store.state.daily[date] = blankDaily(date);
+  }
+  return store.state.daily[date];
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({ version: CURRENT_VERSION, ...store.state }));
+    return true;
+  } catch (e) {
+    toast('存储空间不足，请删除一些照片后重试', 3500);
+    return false;
+  }
+}
+function savePref() { try { localStorage.setItem(PREF_KEY, JSON.stringify(store.pref)); } catch (e) {} }
+function saveCustom() { try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(store.customExercises)); } catch (e) {} }
+function saveTemplates() { try { localStorage.setItem(TEMPLATE_KEY, JSON.stringify(store.templates)); } catch (e) {} }
+function saveAIHistory() {
+  try { store.aiHistory = store.aiHistory.slice(0, 50); localStorage.setItem(AI_HISTORY_KEY, JSON.stringify(store.aiHistory)); } catch (e) {}
+}
+function saveKnowledge() {
+  try { store.knowledge.entries = store.knowledge.entries.slice(0, 200); localStorage.setItem(KNOWLEDGE_CACHE_KEY, JSON.stringify(store.knowledge)); } catch (e) {}
+}
+
+function loadAll() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const o = JSON.parse(raw);
+      if (o.version && o.version < CURRENT_VERSION) migrate(o);
+      store.state.sessions = Array.isArray(o.sessions) ? o.sessions : [];
+      store.state.daily = (o.daily && typeof o.daily === 'object') ? o.daily : {};
+      store.state.hrLog = Array.isArray(o.hrLog) ? o.hrLog : [];
+    }
+    const p = localStorage.getItem(PREF_KEY);
+    if (p) Object.assign(store.pref, JSON.parse(p));
+    const c = localStorage.getItem(CUSTOM_KEY);
+    if (c) Object.assign(store.customExercises, JSON.parse(c));
+    const t = localStorage.getItem(TEMPLATE_KEY);
+    if (t) store.templates = JSON.parse(t);
+    const h = localStorage.getItem(AI_HISTORY_KEY);
+    if (h) store.aiHistory = JSON.parse(h);
+    const k = localStorage.getItem(KNOWLEDGE_CACHE_KEY);
+    if (k) store.knowledge = Object.assign(store.knowledge, JSON.parse(k));
+  } catch (e) { console.warn('读取失败', e); }
+}
+function migrate(o) {
+  if (o.sessions && Array.isArray(o.sessions)) {
+    o.sessions.forEach(s => {
+      if (!s.learnedEntries) {
+        s.learnedEntries = s.entries ? s.entries.filter(e => e.name).map(e => ({ name: e.name, dim: e.dim || '力量' })) : [];
+      }
+      if (!Array.isArray(s.photos)) s.photos = [];
+      if (!Array.isArray(s.partners)) s.partners = [];
+    });
+  }
+  o.version = CURRENT_VERSION;
+}
+
+// ============ 偏好 ============
+function learnPreference(entries) {
+  const learned = [];
+  entries.forEach(e => {
+    if (!e.name) return;
+    const dim = e.dim || '力量';
+    store.pref.dimCount[dim] = (store.pref.dimCount[dim] || 0) + 1;
+    store.pref.exCount[e.name] = (store.pref.exCount[e.name] || 0) + 1;
+    store.pref.lastUsed[e.name] = Date.now();
+    learned.push({ name: e.name, dim });
+  });
+  savePref();
+  return learned;
+}
+function unlearnPreference(learnedEntries) {
+  if (!learnedEntries || !learnedEntries.length) return;
+  learnedEntries.forEach(e => {
+    if (store.pref.exCount[e.name]) {
+      store.pref.exCount[e.name] = Math.max(0, store.pref.exCount[e.name] - 1);
+      if (store.pref.exCount[e.name] === 0) delete store.pref.exCount[e.name];
+    }
+    if (store.pref.dimCount[e.dim]) {
+      store.pref.dimCount[e.dim] = Math.max(0, store.pref.dimCount[e.dim] - 1);
+    }
+  });
+  savePref();
+}
+function topPref(limit = 8) {
+  return Object.entries(store.pref.exCount)
+    .sort((a, b) => (b[1] - a[1]) * 10 + ((store.pref.lastUsed[b[0]] || 0) > (store.pref.lastUsed[a[0]] || 0) ? 1 : 0))
+    .slice(0, limit)
+    .map(([name, cnt]) => ({ name, cnt }));
+}
+function getDimOfEx(name) {
+  for (const dim of Object.keys(EXERCISE_LIBRARY)) {
+    for (const arr of Object.values(EXERCISE_LIBRARY[dim])) {
+      if (arr.includes(name)) return dim;
+    }
+  }
+  return store.customExercises[name] || '力量';
+}
+function getEntryTypeForDim(dim) {
+  if (dim === '有氧') return 'cardio';
+  if (dim === '柔韧' || dim === '平衡') return 'timed';
+  return 'strength';
+}
+function calcE1RM(weight, reps) {
+  if (!weight || !reps || reps <= 0) return null;
+  return weight * (1 + reps / 30);
+}
+function findPR(exName) {
+  let best = null;
+  store.state.sessions.forEach(s => {
+    (s.entries || []).forEach(e => {
+      if (e.name !== exName || e.type !== 'strength' || !e.weight || !e.reps) return;
+      const e1rm = calcE1RM(e.weight, e.reps);
+      if (e1rm && (!best || e1rm > best.e1rm)) {
+        best = { e1rm, weight: e.weight, reps: e.reps, date: s.date, sessionId: s.id };
+      }
+    });
+  });
+  return best;
+}
+function findLastEntry(exName) {
+  let last = null;
+  store.state.sessions
+    .filter(s => s.entries?.some(e => e.name === exName))
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .forEach(s => {
+      const e = s.entries.find(x => x.name === exName);
+      if (e && !last) last = { ...e, date: s.date };
+    });
+  return last;
+}
+
+// ============ 图片压缩 ============
+function compressImage(file, maxDim = 900, quality = 0.55) {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) { reject(new Error('不是图片文件')); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const ratio = maxDim / Math.max(width, height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        try {
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } catch (err) { reject(err); }
+      };
+      img.onerror = () => reject(new Error('图片加载失败'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('文件读取失败'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handlePhotoSelect(files) {
+  const currentCount = $('#photo-preview').children.length;
+  const remaining = MAX_PHOTOS_PER_SESSION - currentCount;
+  if (remaining <= 0) { toast(`每次最多 ${MAX_PHOTOS_PER_SESSION} 张照片`); return; }
+  const toProcess = [...files].slice(0, remaining);
+  if (files.length > remaining) toast(`最多再添加 ${remaining} 张`);
+
+  for (const file of toProcess) {
+    try {
+      const data = await compressImage(file);
+      const pid = uid();
+      pendingPhotos.set(pid, data);
+      $('#photo-preview').appendChild(createPhotoItem(pid, data, ''));
+      updatePhotoCount();
+    } catch (e) {
+      toast('照片处理失败：' + e.message);
+    }
+  }
+}
+
+function createPhotoItem(pid, data, caption) {
+  const item = document.createElement('div');
+  item.className = 'photo-item';
+  item.dataset.pid = pid;
+  item.innerHTML = `
+    <img src="${data}" alt="">
+    <button type="button" class="photo-del" title="删除">✕</button>
+    <input type="text" class="photo-caption" maxlength="40" placeholder="加一句说明…" value="${esc(caption || '')}">
+  `;
+  item.querySelector('.photo-del').addEventListener('click', () => {
+    pendingPhotos.delete(pid);
+    item.remove();
+    updatePhotoCount();
+  });
+  item.querySelector('img').addEventListener('click', () => {
+    openPhotoViewer([{ data, caption: item.querySelector('.photo-caption').value }], 0);
+  });
+  return item;
+}
+
+function updatePhotoCount() {
+  const n = $('#photo-preview').children.length;
+  $('#photo-count').textContent = `${n} / ${MAX_PHOTOS_PER_SESSION}`;
+}
+
+function clearPhotoPreview() {
+  pendingPhotos.clear();
+  $('#photo-preview').innerHTML = '';
+  updatePhotoCount();
+}
+
+function readPhotosFromForm() {
+  const items = [...$('#photo-preview').querySelectorAll('.photo-item')];
+  return items.map(item => ({
+    id: uid(),
+    data: pendingPhotos.get(item.dataset.pid) || '',
+    caption: item.querySelector('.photo-caption').value.trim(),
+    createdAt: Date.now()
+  })).filter(p => p.data);
+}
+
+function loadPhotosToForm(photos) {
+  clearPhotoPreview();
+  if (!photos || !photos.length) return;
+  photos.forEach(p => {
+    const pid = uid();
+    pendingPhotos.set(pid, p.data);
+    $('#photo-preview').appendChild(createPhotoItem(pid, p.data, p.caption || ''));
+  });
+  updatePhotoCount();
+}
+
+// ============ 照片查看器 ============
+function openPhotoViewer(photos, startIdx = 0) {
+  if (!photos || !photos.length) return;
+  viewerList = photos;
+  viewerIdx = Math.max(0, Math.min(startIdx, photos.length - 1));
+  $('#photo-viewer').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  renderViewer();
+}
+function closePhotoViewer() {
+  $('#photo-viewer').classList.remove('show');
+  document.body.style.overflow = '';
+  viewerList = [];
+}
+function renderViewer() {
+  const p = viewerList[viewerIdx];
+  if (!p) return;
+  $('#pv-img').src = p.data;
+  $('#pv-caption').textContent = p.caption || '';
+  $('#pv-meta').textContent = p.meta || '';
+  $('#pv-counter').textContent = `${viewerIdx + 1} / ${viewerList.length}`;
+  $('#pv-prev').disabled = viewerIdx <= 0;
+  $('#pv-next').disabled = viewerIdx >= viewerList.length - 1;
+}
+function viewerPrev() { if (viewerIdx > 0) { viewerIdx--; renderViewer(); } }
+function viewerNext() { if (viewerIdx < viewerList.length - 1) { viewerIdx++; renderViewer(); } }
+
+// ============ 休息计时器 ============
+let restInterval = null, restRemaining = 0;
+
+function startRestTimer(seconds = 90, label = '组间休息') {
+  stopRestTimer();
+  restRemaining = seconds;
+  updateRestUI(label);
+  restInterval = setInterval(() => {
+    restRemaining--;
+    if (restRemaining <= 0) {
+      stopRestTimer();
+      beep();
+      toast('休息结束');
+      return;
+    }
+    updateRestUI(label);
+  }, 1000);
+}
+function stopRestTimer() {
+  if (restInterval) clearInterval(restInterval);
+  restInterval = null;
+  const el = document.getElementById('rest-timer');
+  if (el) el.remove();
+}
+function updateRestUI(label) {
+  let el = document.getElementById('rest-timer');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'rest-timer';
+    el.className = 'rest-float';
+    document.body.appendChild(el);
+  }
+  const m = Math.floor(restRemaining / 60);
+  const s = restRemaining % 60;
+  el.innerHTML = `<span>⏱ ${label}</span>
+    <strong>${m}:${String(s).padStart(2, '0')}</strong>
+    <button type="button" id="rest-stop" style="border:none;background:rgba(255,255,255,.2);
+      color:#fff;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">停止</button>`;
+  document.getElementById('rest-stop').onclick = stopRestTimer;
+}
+function beep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    osc.start(); osc.stop(ctx.currentTime + 0.4);
+  } catch (e) {}
+}
+
+// ============ 动作条目 ============
+function createEntryEl(data = {}) {
+  const type = data.type || 'strength';
+  const dim = data.dim || '力量';
+  const el = document.createElement('div');
+  el.className = 'entry';
+  el.dataset.eid = data.id || uid();
+  el.dataset.type = type;
+  el.dataset.dim = dim;
+
+  const dimOpts = DIMENSIONS.map(d =>
+    `<option value="${d.key}" ${d.key === dim ? 'selected' : ''}>${d.icon} ${d.key}</option>`).join('');
+  const typeOpts = ENTRY_TYPES.map(t =>
+    `<option value="${t.value}" ${t.value === type ? 'selected' : ''}>${t.label}</option>`).join('');
+
+  el.innerHTML = `
+    <div class="entry-head">
+      <input type="text" class="e-name" list="exercise-suggestions" placeholder="动作名称" value="${esc(val(data.name))}">
+      <select class="e-dim">${dimOpts}</select>
+      <select class="e-type">${typeOpts}</select>
+      <button type="button" class="e-del" title="删除">✕</button>
+    </div>
+    <div class="last-ref"></div>
+    <div class="fgroup" data-for="strength">
+      <label>组数<input type="number" class="e-sets" min="0" step="1" placeholder="组" value="${esc(val(data.sets))}"></label>
+      <label>次数<input type="number" class="e-reps" min="0" step="1" placeholder="次/组" value="${esc(val(data.reps))}"></label>
+      <label>重量 kg<input type="number" class="e-weight" min="0" step="0.5" placeholder="空=自重" value="${esc(val(data.weight))}"></label>
+      <label>RIR
+        <select class="e-rir" style="padding:7px 4px;font-size:12px;">
+          <option value="">—</option>
+          ${RIR_SCALE.map(r => `<option value="${r.value}" ${data.rir === r.value ? 'selected' : ''}>${r.label}</option>`).join('')}
+        </select>
+      </label>
+    </div>
+    <div class="fgroup" data-for="cardio">
+      <label>时长 分钟<input type="number" class="e-duration" min="0" step="1" placeholder="分钟" value="${esc(val(data.duration))}"></label>
+      <label>距离 km<input type="number" class="e-distance" min="0" step="0.01" placeholder="公里" value="${esc(val(data.distance))}"></label>
+    </div>
+    <div class="fgroup" data-for="timed">
+      <label>组数<input type="number" class="e-sets" min="0" step="1" placeholder="组" value="${esc(val(data.sets))}"></label>
+      <label>每组秒数<input type="number" class="e-durationSec" min="0" step="1" placeholder="秒" value="${esc(val(data.durationSec))}"></label>
+    </div>
+    <div class="fgroup" data-for="freestyle">
+      <input type="text" class="e-note" placeholder="自由描述" value="${esc(val(data.note))}">
+    </div>
+    <div class="entry-tools" style="display:none;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;">
+      <span class="e1rm-badge" style="font-size:12px;color:#4f46e5;background:#eef2ff;padding:3px 9px;border-radius:999px;"></span>
+      <span class="pr-badge" style="display:none;font-size:12px;color:#b45309;background:#fffbeb;padding:3px 9px;border-radius:999px;">🏆 新 PR</span>
+      <button type="button" class="rest-btn" style="border:none;background:#f1f5f9;color:#475569;
+        border-radius:7px;padding:5px 11px;font-size:12px;cursor:pointer;">⏱ 休息 90s</button>
+    </div>`;
+
+  el.querySelector('.e-type').value = type;
+  setEntryType(el, type);
+  el.querySelector('.e-type').addEventListener('change', ev => setEntryType(el, ev.target.value));
+  el.querySelector('.e-dim').addEventListener('change', ev => {
+    el.dataset.dim = ev.target.value;
+    const suggested = getEntryTypeForDim(ev.target.value);
+    el.querySelector('.e-type').value = suggested;
+    setEntryType(el, suggested);
+  });
+
+  const nameInput = el.querySelector('.e-name');
+  nameInput.addEventListener('blur', () => onNameChange(el));
+  nameInput.addEventListener('input', () => {
+    if (nameInput.value.trim().length >= 2) onNameChange(el, true);
+  });
+
+  ['e-weight', 'e-reps'].forEach(cls => {
+    const inp = el.querySelector('.' + cls);
+    if (inp) inp.addEventListener('input', () => updateE1RM(el));
+  });
+
+  const restBtn = el.querySelector('.rest-btn');
+  if (restBtn) restBtn.addEventListener('click', () => {
+    const secs = Number(prompt('休息时长（秒）', '90')) || 90;
+    startRestTimer(secs);
+  });
+
+  if (data.name) onNameChange(el);
+  if (type === 'strength') updateE1RM(el);
+  return el;
+}
+
+function onNameChange(el, silent = false) {
+  const name = el.querySelector('.e-name').value.trim();
+  const refEl = el.querySelector('.last-ref');
+  const toolsEl = el.querySelector('.entry-tools');
+  if (!name) { refEl.style.display = 'none'; toolsEl.style.display = 'none'; return; }
+
+  const last = findLastEntry(name);
+  if (last) {
+    let refText = `上次：${daysAgo(last.date)}`;
+    if (last.type === 'strength') {
+      refText += ` · ${last.weight ?? '自重'}kg × ${last.sets ?? '?'}组 × ${last.reps ?? '?'}次`;
+      if (last.rir != null) refText += `（RIR ${last.rir}）`;
+    } else if (last.type === 'cardio') {
+      refText += ` · ${last.duration ?? '?'}分钟${last.distance ? ' / ' + last.distance + 'km' : ''}`;
+    }
+    refEl.textContent = '📋 ' + refText;
+    refEl.style.display = 'block';
+
+    if (last.type === 'strength' && !silent) {
+      const w = el.querySelector('.e-weight'), s = el.querySelector('.e-sets'), r = el.querySelector('.e-reps');
+      if (w && !w.value && last.weight) w.placeholder = `${last.weight} kg`;
+      if (s && !s.value && last.sets) s.placeholder = `${last.sets} 组`;
+      if (r && !r.value && last.reps) r.placeholder = `${last.reps} 次`;
+    }
+  } else {
+    refEl.style.display = 'none';
+  }
+  if (el.dataset.type === 'strength') toolsEl.style.display = 'flex';
+}
+
+function updateE1RM(el) {
+  if (el.dataset.type !== 'strength') return;
+  const name = el.querySelector('.e-name').value.trim();
+  const weight = Number(el.querySelector('.e-weight').value);
+  const reps = Number(el.querySelector('.e-reps').value);
+  const badge = el.querySelector('.e1rm-badge');
+  const prBadge = el.querySelector('.pr-badge');
+  const e1rm = calcE1RM(weight, reps);
+  if (e1rm) {
+    badge.textContent = `e1RM ≈ ${Math.round(e1rm)} kg`;
+    if (name && weight && reps) {
+      const prevPR = findPR(name);
+      prBadge.style.display = (!prevPR || e1rm > prevPR.e1rm) ? 'inline-block' : 'none';
+    }
+  } else {
+    badge.textContent = '';
+    prBadge.style.display = 'none';
+  }
+}
+
+function setEntryType(el, type) {
+  el.dataset.type = type;
+  el.querySelectorAll('.fgroup').forEach(g => g.classList.toggle('active', g.dataset.for === type));
+  const tools = el.querySelector('.entry-tools');
+  if (tools) tools.style.display = type === 'strength' ? 'flex' : 'none';
+  if (type === 'strength') updateE1RM(el);
+}
+
+function readEntry(el) {
+  const type = el.dataset.type;
+  const dim = el.querySelector('.e-dim').value;
+  const name = el.querySelector('.e-name').value.trim();
+  const g = el.querySelector(`.fgroup[data-for="${type}"]`);
+  const e = { id: el.dataset.eid, name, type, dim };
+
+  if (type === 'strength') {
+    e.sets = numOrNull(g.querySelector('.e-sets').value);
+    e.reps = numOrNull(g.querySelector('.e-reps').value);
+    e.weight = numOrNull(g.querySelector('.e-weight').value);
+    e.rir = numOrNull(el.querySelector('.e-rir')?.value);
+  } else if (type === 'cardio') {
+    e.duration = numOrNull(g.querySelector('.e-duration').value);
+    e.distance = numOrNull(g.querySelector('.e-distance').value);
+  } else if (type === 'timed') {
+    e.sets = numOrNull(g.querySelector('.e-sets').value);
+    e.durationSec = numOrNull(g.querySelector('.e-durationSec').value);
+  } else {
+    e.note = g.querySelector('.e-note').value.trim();
+  }
+  return e;
+}
+
+function describeEntry(e) {
+  const parts = [];
+  if (e.type === 'strength') {
+    if (e.sets != null && e.reps != null) parts.push(`${e.sets} 组 × ${e.reps} 次`);
+    else if (e.sets != null) parts.push(`${e.sets} 组`);
+    if (e.weight != null && e.weight > 0) parts.push(`@ ${e.weight} kg`);
+    else if (e.weight === 0) parts.push('自重');
+    if (e.rir != null) parts.push(`RIR ${e.rir}`);
+  } else if (e.type === 'cardio') {
+    if (e.duration != null) parts.push(`${e.duration} 分钟`);
+    if (e.distance != null) parts.push(`${e.distance} km`);
+  } else if (e.type === 'timed') {
+    if (e.sets != null) parts.push(`${e.sets} 组`);
+    if (e.durationSec != null) parts.push(`每组 ${e.durationSec} 秒`);
+  } else if (e.note) parts.push(e.note);
+  return parts.join(' · ') || '—';
+}
+
+function renderPrefPanel(container) {
+  if (!container) return;
+  const top = topPref(8);
+  if (!top.length) { container.innerHTML = ''; return; }
+  container.innerHTML = '<span style="font-size:12px;color:#9ca3af;width:100%;">常用动作（点击快速填入）：</span>' +
+    top.map(t => `<span class="pref-chip" data-ex="${esc(t.name)}" data-dim="${esc(getDimOfEx(t.name))}">${esc(t.name)}<span class="cnt">${t.cnt}</span></span>`).join('');
+  container.querySelectorAll('.pref-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const el = createEntryEl({ name: chip.dataset.ex, dim: chip.dataset.dim, type: getEntryTypeForDim(chip.dataset.dim) });
+      $('#entry-list').appendChild(el);
+      el.querySelector('.e-name').focus();
+    });
+  });
+}
+
+function updateDatalist() {
+  const all = new Set();
+  Object.values(EXERCISE_LIBRARY).forEach(subs => Object.values(subs).forEach(arr => arr.forEach(n => all.add(n))));
+  Object.keys(store.customExercises).forEach(n => all.add(n));
+  Object.keys(store.pref.exCount).forEach(n => all.add(n));
+  store.state.sessions.forEach(s => (s.entries || []).forEach(e => { if (e.name) all.add(e.name); }));
+  $('#exercise-suggestions').innerHTML = [...all].map(n => `<option value="${esc(n)}"></option>`).join('');
+}
+
+// ============ 视图切换 ============
+function switchView(name) {
+  $$('.tabs button').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  $$('#bottom-nav button').forEach(b => b.classList.toggle('active',
+    b.dataset.view === name || (name !== 'today' && name !== 'train' && name !== 'timeline' && b.dataset.view === 'more')));
+  $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+  if (name === 'today') renderToday();
+  if (name === 'train') { renderList(); renderPrefPanel($('#pref-panel')); }
+  if (name === 'health') renderDailyList();
+  if (name === 'trend') renderTrend();
+  if (name === 'timeline') renderTimeline();
+  if (name === 'ai') { loadAISettings(); renderAIHistory(); }
+  if (name === 'knowledge') renderKnowledge();
+  if (name === 'settings') renderSettings();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============ 渲染：今日 ============
+function metricCard(cls, label, value, unit, sub) {
+  return `<div class="metric ${cls}"><div class="m-label">${label}</div>
+    <div><span class="m-val">${value}</span><span class="m-unit">${unit || ''}</span></div>
+    ${sub ? `<div class="m-sub">${sub}</div>` : ''}</div>`;
+}
+
+function renderToday() {
+  const date = todayStr();
+  const d = getDaily(date) || blankDaily(date);
+  const sessions = store.state.sessions.filter(s => s.date === date && !s.deletedAt);
+  let sets = 0, volume = 0;
+  sessions.forEach(s => s.entries.forEach(e => {
+    if (e.sets) sets += Number(e.sets) || 0;
+    if (e.type === 'strength' && e.sets && e.reps && e.weight) volume += e.sets * e.reps * e.weight;
+  }));
+  $('#today-title').textContent = date + ' 概览';
+  $('#today-metrics').innerHTML =
+    metricCard('', '❤️ 心率', fmt(d.hrRest || d.hrAvg), 'bpm', d.hrAvg ? `平均 ${d.hrAvg}` : '') +
+    metricCard('', '👟 步数', fmt(d.steps), '步', '') +
+    metricCard('', '😴 睡眠', fmt(d.sleep, 1), '小时', d.sleepDeep ? `深睡 ${fmt(d.sleepDeep, 1)}h` : '') +
+    metricCard('', '🔥 消耗', fmt(d.calActive), 'kcal', '') +
+    metricCard('', '🧘 恢复', fmt(d.rest), '分钟', sessions.length ? `${sessions.length} 次训练` : '休息日') +
+    metricCard('', '🍽️ 饮食', fmt(d.calIntake), 'kcal', '') +
+    metricCard('', '⚖️ 体重', fmt(d.weight, 1), 'kg', '') +
+    metricCard('', '💪 训练量', fmt(sets), '组', volume ? `容量 ${Math.round(volume).toLocaleString()} kg` : '');
+  const sc = $('#today-sessions-count');
+  sc.textContent = sessions.length ? `（${sessions.length} 次）` : '';
+  $('#today-sessions').innerHTML = sessions.length
+    ? sessions.map(renderSessionCard).join('')
+    : '<p class="empty">今天还没有训练记录</p>';
+}
+
+function renderSessionCard(s) {
+  const cat = CAT_MAP[s.category] || { icon: '', cls: '' };
+  const entriesHtml = s.entries.map(e => {
+    const dimIcon = (DIMENSIONS.find(d => d.key === e.dim) || {}).icon || '';
+    let prMark = '';
+    if (e.type === 'strength' && e.weight && e.reps) {
+      const e1rm = calcE1RM(e.weight, e.reps);
+      const pr = findPR(e.name);
+      if (pr && Math.abs(pr.e1rm - e1rm) < 0.01) prMark = '<span class="pr-mark">🏆 PR</span>';
+    }
+    return `<li><span class="ex-name">${dimIcon} ${esc(e.name)}${prMark}</span><span class="ex-data">${esc(describeEntry(e))}</span></li>`;
+  }).join('');
+
+  const extras = [];
+  if (s.hrAvg) extras.push(`<span class="chip">❤️ ${s.hrAvg} bpm</span>`);
+  if (s.calBurned) extras.push(`<span class="chip">🔥 ${s.calBurned} kcal</span>`);
+  if (s.partners && s.partners.length) {
+    extras.push(`<span class="partners-chip">👥 ${s.partners.map(esc).join('、')}</span>`);
+  }
+
+  const photos = s.photos || [];
+  let photosHtml = '';
+  if (photos.length) {
+    const maxShow = 4;
+    photosHtml = '<div class="session-photos">' +
+      photos.slice(0, maxShow).map((p, i) =>
+        `<img class="thumb" src="${p.data}" alt="" data-sid="${s.id}" data-pidx="${i}" title="${esc(p.caption || '')}">`
+      ).join('') +
+      (photos.length > maxShow ? `<div class="more">+${photos.length - maxShow}</div>` : '') +
+      '</div>';
+  }
+
+  return `<div class="session" data-id="${s.id}">
+    <div class="session-head">
+      <div class="session-title"><span class="cat ${cat.cls}">${cat.icon} ${esc(s.category)}</span>${s.title ? `<strong>${esc(s.title)}</strong>` : ''}</div>
+      <div class="session-actions">
+        <button type="button" class="icon-btn edit" title="编辑">✏️</button>
+        <button type="button" class="icon-btn del" title="删除">🗑️</button>
+      </div>
+    </div>
+    <ul class="entry-list-view">${entriesHtml}</ul>
+    ${extras.length ? `<div class="session-extra">${extras.join('')}</div>` : ''}
+    ${photosHtml}
+    ${s.note ? `<p class="session-note">📝 ${esc(s.note)}</p>` : ''}
+  </div>`;
+}
+
+function renderList() {
+  const filter = $('#filter-category').value;
+  let list = store.state.sessions.filter(s => !s.deletedAt);
+  if (filter !== 'all') list = list.filter(s => s.category === filter);
+  list.sort((a, b) => a.date === b.date ? (b.createdAt || 0) - (a.createdAt || 0) : (a.date < b.date ? 1 : -1));
+  const wrap = $('#session-list');
+  if (!list.length) { wrap.innerHTML = '<p class="empty">还没有训练记录</p>'; return; }
+  const groups = new Map();
+  list.forEach(s => { if (!groups.has(s.date)) groups.set(s.date, []); groups.get(s.date).push(s); });
+  let html = '';
+  groups.forEach((items, date) => {
+    const n = items.reduce((a, s) => a + s.entries.length, 0);
+    html += `<div class="day-group"><div class="day-head"><span>${dateLabel(date)}</span><span class="day-meta">${items.length} 次 · ${n} 个动作</span></div>${items.map(renderSessionCard).join('')}</div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+function dateLabel(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const week = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+  const t = todayStr(), y = addDays(t, -1);
+  return (dateStr === t ? '今天 · ' : dateStr === y ? '昨天 · ' : '') + `${dateStr} ${week}`;
+}
+
+// ============ 渲染：健康 ============
+function renderDailyList() {
+  const dates = Object.keys(store.state.daily).sort((a, b) => a < b ? 1 : -1);
+  const wrap = $('#daily-list');
+  if (!dates.length) { wrap.innerHTML = '<p class="empty">还没有健康数据</p>'; return; }
+  wrap.innerHTML = dates.map(date => {
+    const d = store.state.daily[date];
+    const items = [];
+    if (d.hrRest || d.hrAvg) items.push(`❤️ ${d.hrRest || d.hrAvg} bpm`);
+    if (d.steps) items.push(`👟 ${fmt(d.steps)} 步`);
+    if (d.sleep) items.push(`😴 ${d.sleep} h`);
+    if (d.calActive) items.push(`🔥 ${fmt(d.calActive)} kcal`);
+    if (d.rest) items.push(`🧘 ${d.rest} min`);
+    if (d.calIntake) items.push(`🍽️ ${fmt(d.calIntake)} kcal`);
+    if (d.weight) items.push(`⚖️ ${d.weight} kg`);
+    return `<div class="session" data-date="${date}">
+      <div class="session-head">
+        <div class="session-title"><strong>${dateLabel(date)}</strong></div>
+        <div class="session-actions">
+          <button type="button" class="icon-btn d-edit">✏️</button>
+          <button type="button" class="icon-btn d-del">🗑️</button>
+        </div>
+      </div>
+      <div class="session-extra">${items.map(i => `<span class="chip">${i}</span>`).join('') || '<span style="color:#9ca3af;font-size:12.5px;">仅备注</span>'}</div>
+      ${d.note ? `<p class="session-note">📝 ${esc(d.note)}</p>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ============ 渲染：趋势 ============
+function metricValue(date, metric, exName) {
+  const d = store.state.daily[date];
+  const sessions = store.state.sessions.filter(s => s.date === date && !s.deletedAt);
+  switch (metric) {
+    case 'hrRest': return d?.hrRest ?? null;
+    case 'hrAvg': return d?.hrAvg ?? null;
+    case 'steps': return d?.steps ?? null;
+    case 'sleep': return d?.sleep ?? null;
+    case 'calActive': return d?.calActive ?? null;
+    case 'weight': return d?.weight ?? null;
+    case 'trainCount': return sessions.length || null;
+    case 'trainSets': { let v = 0; sessions.forEach(s => s.entries.forEach(e => { if (e.sets) v += e.sets; })); return sessions.length ? v : null; }
+    case 'trainVolume': { let v = 0; sessions.forEach(s => s.entries.forEach(e => { if (e.type === 'strength' && e.sets && e.reps && e.weight) v += e.sets * e.reps * e.weight; })); return sessions.length ? v : null; }
+    case 'exercise': {
+      if (!exName) return null;
+      let best = null;
+      sessions.forEach(s => s.entries.forEach(e => {
+        if (e.name === exName && e.type === 'strength' && e.weight && e.reps) {
+          const e1rm = calcE1RM(e.weight, e.reps);
+          if (e1rm && (!best || e1rm > best)) best = e1rm;
+        }
+      }));
+      return best;
+    }
+  }
+  return null;
+}
+
+function populateTrendExerciseSelect() {
+  const sel = $('#trend-exercise');
+  const names = new Set();
+  store.state.sessions.forEach(s => (s.entries || []).forEach(e => { if (e.name) names.add(e.name); }));
+  const cur = sel.value;
+  sel.innerHTML = [...names].map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  if (cur && names.has(cur)) sel.value = cur;
+}
+
+function renderTrend() {
+  const metric = $('#trend-metric').value;
+  const days = Number($('#trend-range').value);
+  const exSelect = $('#trend-exercise');
+  const isEx = metric === 'exercise';
+  exSelect.style.display = isEx ? 'inline-block' : 'none';
+  if (isEx) populateTrendExerciseSelect();
+
+  const meta = METRIC_META[metric] || { label: '', unit: '', color: '#4f46e5' };
+  const exName = isEx ? exSelect.value : null;
+  const data = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = addDays(todayStr(), -i);
+    data.push({ date, value: metricValue(date, metric, exName) });
+  }
+  drawLineChart($('#trend-canvas'), data, meta);
+  const vals = data.map(d => d.value).filter(v => v !== null && v !== undefined);
+  if (vals.length) {
+    const sum = vals.reduce((a, b) => a + b, 0);
+    const avg = sum / vals.length, max = Math.max(...vals), min = Math.min(...vals);
+    $('#trend-summary').innerHTML = `
+      <div class="trend-ts-item"><div style="font-size:18px;font-weight:700;color:var(--primary);">${fmt(avg, avg < 10 ? 1 : 0)}</div><div style="font-size:11.5px;color:var(--muted);">平均 ${meta.unit}</div></div>
+      <div class="trend-ts-item"><div style="font-size:18px;font-weight:700;color:var(--primary);">${fmt(max, max < 10 ? 1 : 0)}</div><div style="font-size:11.5px;color:var(--muted);">最高 ${meta.unit}</div></div>
+      <div class="trend-ts-item"><div style="font-size:18px;font-weight:700;color:var(--primary);">${fmt(min, min < 10 ? 1 : 0)}</div><div style="font-size:11.5px;color:var(--muted);">最低 ${meta.unit}</div></div>`;
+  } else {
+    $('#trend-summary').innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#9ca3af;font-size:12.5px;">暂无数据</div>';
+  }
+}
+
+function drawLineChart(canvas, data, meta) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const W = Math.max(rect.width, 200), H = 220;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  const padL = 42, padR = 12, padT = 16, padB = 26;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const values = data.map(d => d.value).filter(v => v != null);
+  const maxV = values.length ? Math.max(...values) : 10;
+  const minV = values.length ? Math.min(...values) : 0;
+  const top = maxV === minV ? maxV + 1 : maxV + (maxV - minV) * 0.12;
+  const bottom = Math.min(0, minV - (maxV - minV) * 0.1);
+  ctx.strokeStyle = '#eef1f7'; ctx.lineWidth = 1;
+  ctx.font = '10px system-ui'; ctx.fillStyle = '#9ca3af'; ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const y = padT + (plotH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    ctx.fillText(fmt(top - ((top - bottom) / 4) * i, Math.abs(top) < 10 ? 1 : 0), padL - 6, y + 3);
+  }
+  const n = data.length, stepX = n > 1 ? plotW / (n - 1) : plotW;
+  const xOf = i => padL + (n > 1 ? i * stepX : plotW / 2);
+  const yOf = v => padT + plotH - ((v - bottom) / (top - bottom)) * plotH;
+  const pts = data.map((d, i) => d.value == null ? null : [xOf(i), yOf(d.value)]);
+  const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+  grad.addColorStop(0, hexA(meta.color, .22)); grad.addColorStop(1, hexA(meta.color, .01));
+  ctx.beginPath(); let started = false;
+  pts.forEach(p => { if (!p) { started = false; return; } if (!started) { ctx.moveTo(p[0], p[1]); started = true; } else ctx.lineTo(p[0], p[1]); });
+  const validPts = pts.filter(Boolean);
+  if (validPts.length > 1) {
+    ctx.lineTo(validPts[validPts.length - 1][0], padT + plotH);
+    ctx.lineTo(validPts[0][0], padT + plotH);
+    ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+  }
+  ctx.beginPath(); started = false;
+  pts.forEach(p => { if (!p) { started = false; return; } if (!started) { ctx.moveTo(p[0], p[1]); started = true; } else ctx.lineTo(p[0], p[1]); });
+  ctx.strokeStyle = meta.color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
+  pts.forEach(p => { if (!p) return; ctx.beginPath(); ctx.arc(p[0], p[1], 3, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = meta.color; ctx.lineWidth = 1.8; ctx.stroke(); });
+  ctx.fillStyle = '#9ca3af'; ctx.textAlign = 'center';
+  const ls = Math.max(1, Math.ceil(n / 7));
+  data.forEach((d, i) => { if (i % ls !== 0 && i !== n - 1) return; ctx.fillText(d.date.slice(5), xOf(i), H - 8); });
+}
+
+// ============ 渲染：时光 ============
+function collectAllPhotos() {
+  const out = [];
+  store.state.sessions.filter(s => !s.deletedAt).forEach(s => {
+    (s.photos || []).forEach((p, i) => {
+      out.push({
+        ...p,
+        sessionId: s.id,
+        date: s.date,
+        title: s.title,
+        category: s.category,
+        partners: s.partners || [],
+        photoIdx: i,
+        meta: `${s.date}${s.title ? ' · ' + s.title : ''}${s.partners && s.partners.length ? ' · 与 ' + s.partners.join('、') : ''}`
+      });
+    });
+  });
+  out.sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || 0) - (a.createdAt || 0));
+  return out;
+}
+
+function collectAllPartners() {
+  const set = new Set();
+  store.state.sessions.filter(s => !s.deletedAt).forEach(s => {
+    (s.partners || []).forEach(p => set.add(p));
+  });
+  return [...set].sort();
+}
+
+function renderTimeline() {
+  const all = collectAllPhotos();
+  const partners = collectAllPartners();
+
+  const filterEl = $('#timeline-filters');
+  if (partners.length) {
+    filterEl.innerHTML = `<span class="filter-chip ${timelineFilter === 'all' ? 'active' : ''}" data-filter="all">全部</span>` +
+      partners.map(p => `<span class="filter-chip ${timelineFilter === p ? 'active' : ''}" data-filter="${esc(p)}">${esc(p)}</span>`).join('');
+    filterEl.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        timelineFilter = chip.dataset.filter;
+        renderTimeline();
+      });
+    });
+  } else {
+    filterEl.innerHTML = '';
+  }
+
+  let list = all;
+  if (timelineFilter !== 'all') {
+    list = all.filter(p => (p.partners || []).includes(timelineFilter));
+  }
+
+  $('#timeline-count').textContent = list.length ? `（${list.length} 张）` : '';
+  const bytes = new Blob([JSON.stringify(all)]).size;
+  $('#timeline-storage').textContent = all.length ? `照片约占用 ${(bytes / 1024 / 1024).toFixed(1)} MB` : '';
+
+  const grid = $('#timeline-grid');
+  if (!list.length) {
+    grid.innerHTML = '<p class="empty" style="grid-column:1/-1;">还没有训练照片。在训练记录中添加「📷 拍照 / 选择」即可开始记录训练时光。</p>';
+    return;
+  }
+
+  grid.innerHTML = list.map((p, i) => `
+    <div class="timeline-card" data-tidx="${i}">
+      <img src="${p.data}" alt="">
+      <div class="tc-info">
+        <div class="tc-date">${p.date}</div>
+        ${p.partners && p.partners.length ? `<div style="color:#be185d;font-size:11px;">👥 ${p.partners.map(esc).join('、')}</div>` : ''}
+        <div class="tc-caption">${esc(p.caption || p.title || p.category)}</div>
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.timeline-card').forEach((card, i) => {
+    card.addEventListener('click', () => {
+      openPhotoViewer(list.map(p => ({ data: p.data, caption: p.caption, meta: p.meta })), i);
+    });
+  });
+}
+
+// ============ 渲染：设置 ============
+function renderSettings() {
+  renderPrefPanel($('#settings-pref'));
+  const wrap = $('#custom-ex-list');
+  const names = Object.keys(store.customExercises);
+  if (!names.length) {
+    wrap.innerHTML = '<p style="font-size:12.5px;color:#9ca3af;margin:0;">还没有自定义动作。</p>';
+  } else {
+    wrap.innerHTML = names.map(n =>
+      `<span class="pref-chip" style="background:#f0fdf4;color:#166534;">${esc(n)}<span class="cnt">${esc(store.customExercises[n])}</span><span style="margin-left:6px;cursor:pointer;color:#dc2626;" data-del-custom="${esc(n)}">✕</span></span>`
+    ).join('');
+  }
+  const days = Object.keys(store.state.daily).length;
+  let sets = 0;
+  store.state.sessions.forEach(s => s.entries.forEach(e => { if (e.sets) sets += e.sets; }));
+  const photoCount = store.state.sessions.reduce((n, s) => n + (s.photos?.length || 0), 0);
+  const bytes = new Blob([JSON.stringify(store.state)]).size;
+  $('#storage-info').textContent =
+    `${store.state.sessions.length} 次训练 · ${days} 天健康数据 · ${sets} 组 · ${photoCount} 张照片 · 占用 ${(bytes / 1024).toFixed(1)} KB`;
+}
+
+function renderAll() {
+  renderToday(); renderList(); renderDailyList(); renderTrend(); renderTimeline(); renderSettings();
+}
+
+// ============ 表单操作 ============
+function captureDraft() {
+  const entryEls = [...$('#entry-list').querySelectorAll('.entry')];
+  const entries = entryEls.map(el => readEntry(el)).filter(e => e.name);
+  const photos = readPhotosFromForm();
+  const draft = {
+    date: $('#f-date').value, category: $('#f-category').value,
+    title: $('#f-title').value, note: $('#f-note').value,
+    partners: $('#f-partners').value,
+    hrAvg: $('#f-hr').value, calBurned: $('#f-cal').value,
+    entries, photos: photos.map(p => ({ data: p.data, caption: p.caption })), editingId
+  };
+  if (draft.date || entries.length || photos.length) {
+    try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); }
+    catch (e) { sessionStorage.removeItem(DRAFT_KEY); }
+  }
+}
+function scheduleDraft() { clearTimeout(draftTimer); draftTimer = setTimeout(captureDraft, 800); }
+function clearDraft() { sessionStorage.removeItem(DRAFT_KEY); }
+
+function restoreDraft() {
+  const raw = sessionStorage.getItem(DRAFT_KEY);
+  if (!raw) return false;
+  try {
+    const d = JSON.parse(raw);
+    if (!d.entries?.length && !d.title && !d.note && !d.photos?.length) return false;
+    if (!confirm('检测到未保存的训练草稿，是否恢复？')) { sessionStorage.removeItem(DRAFT_KEY); return false; }
+    $('#f-date').value = d.date || todayStr();
+    $('#f-category').value = d.category || '体能训练';
+    $('#f-title').value = d.title || '';
+    $('#f-note').value = d.note || '';
+    $('#f-partners').value = d.partners || '';
+    $('#f-hr').value = d.hrAvg || '';
+    $('#f-cal').value = d.calBurned || '';
+    editingId = d.editingId || null;
+    const list = $('#entry-list');
+    list.innerHTML = '';
+    (d.entries || []).forEach(e => list.appendChild(createEntryEl(e)));
+    if (!d.entries?.length) list.appendChild(createEntryEl());
+    if (d.photos && d.photos.length) {
+      loadPhotosToForm(d.photos.map(p => ({ data: p.data, caption: p.caption })));
+    }
+    if (editingId) {
+      $('#submit-btn').textContent = '保存修改';
+      $('#cancel-edit').hidden = false;
+      $('#session-form-title').textContent = '编辑训练';
+    }
+    return true;
+  } catch (e) { return false; }
+}
+
+function resetSessionForm(skipDraft = false) {
+  editingId = null;
+  $('#f-date').value = todayStr();
+  $('#f-title').value = ''; $('#f-note').value = '';
+  $('#f-partners').value = '';
+  $('#f-hr').value = ''; $('#f-cal').value = '';
+  $('#entry-list').innerHTML = '';
+  $('#entry-list').appendChild(createEntryEl());
+  clearPhotoPreview();
+  $('#submit-btn').textContent = '保存训练';
+  $('#cancel-edit').hidden = true;
+  $('#session-form-title').textContent = '记录训练';
+  renderPrefPanel($('#pref-panel'));
+  updateDatalist();
+  if (!skipDraft) clearDraft();
+}
+
+function onSubmitSession(ev) {
+  ev.preventDefault();
+  const date = $('#f-date').value;
+  const category = $('#f-category').value;
+  const title = $('#f-title').value.trim();
+  const note = $('#f-note').value.trim();
+  const partnersRaw = $('#f-partners').value.trim();
+  const partners = partnersRaw ? partnersRaw.split(/[,，、\s]+/).filter(Boolean).slice(0, 10) : [];
+  const hrAvg = numOrNull($('#f-hr').value);
+  const calBurned = numOrNull($('#f-cal').value);
+  if (!date) { toast('请选择日期'); return; }
+  const entryEls = [...$('#entry-list').querySelectorAll('.entry')];
+  if (!entryEls.length) { toast('请至少添加一个动作'); return; }
+  const entries = [];
+  for (const el of entryEls) {
+    const e = readEntry(el);
+    if (!e.name) { toast('请填写动作名称'); el.querySelector('.e-name').focus(); return; }
+    entries.push(e);
+  }
+  const photos = readPhotosFromForm();
+  const payload = { date, category, title, note, partners, hrAvg, calBurned, entries, photos };
+
+  if (editingId) {
+    const old = store.state.sessions.find(s => s.id === editingId);
+    if (old) unlearnPreference(old.learnedEntries);
+    payload.learnedEntries = learnPreference(entries);
+    const idx = store.state.sessions.findIndex(s => s.id === editingId);
+    if (idx > -1) store.state.sessions[idx] = { ...store.state.sessions[idx], ...payload };
+  } else {
+    store.state.sessions.push({ id: uid(), createdAt: Date.now(), learnedEntries: learnPreference(entries), ...payload });
+  }
+  if (!save()) return;
+  clearDraft();
+  resetSessionForm(true);
+  renderList();
+  renderToday();
+  renderTimeline();
+  toast(photos.length ? `训练已保存，包含 ${photos.length} 张照片` : '训练已保存');
+}
+
+function startEditSession(id) {
+  const s = store.state.sessions.find(x => x.id === id);
+  if (!s) return;
+  editingId = id;
+  $('#f-date').value = s.date;
+  $('#f-category').value = s.category;
+  $('#f-title').value = s.title || '';
+  $('#f-note').value = s.note || '';
+  $('#f-partners').value = (s.partners || []).join(', ');
+  $('#f-hr').value = s.hrAvg ?? '';
+  $('#f-cal').value = s.calBurned ?? '';
+  const list = $('#entry-list');
+  list.innerHTML = '';
+  s.entries.forEach(e => list.appendChild(createEntryEl(e)));
+  loadPhotosToForm(s.photos || []);
+  $('#submit-btn').textContent = '保存修改';
+  $('#cancel-edit').hidden = false;
+  $('#session-form-title').textContent = '编辑训练';
+  renderPrefPanel($('#pref-panel'));
+  scheduleDraft();
+}
+
+function deleteSession(id) {
+  const s = store.state.sessions.find(x => x.id === id);
+  if (!s) return;
+  const photoNote = (s.photos && s.photos.length) ? `（含 ${s.photos.length} 张照片）` : '';
+  if (!confirm(`确定删除「${s.date} ${s.category}${s.title ? ' · ' + s.title : ''}」${photoNote}吗？`)) return;
+  s.deletedAt = Date.now();
+  save();
+  renderList(); renderToday(); renderTimeline();
+  showUndoToast(s);
+}
+
+function showUndoToast(s) {
+  const el = $('#toast');
+  el.innerHTML = `已删除。 <button type="button" id="undo-del" style="border:none;background:#fff;
+    color:#111827;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;margin-left:8px;">撤销</button>`;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.classList.remove('show'); el.innerHTML = ''; }, 6000);
+  const btn = document.getElementById('undo-del');
+  if (btn) btn.onclick = () => {
+    delete s.deletedAt;
+    save(); renderList(); renderToday(); renderTimeline();
+    el.classList.remove('show'); toast('已恢复');
+  };
+}
+
+function saveAsTemplate() {
+  const title = $('#f-title').value.trim() || '未命名模板';
+  const category = $('#f-category').value;
+  const entryEls = [...$('#entry-list').querySelectorAll('.entry')];
+  const entries = entryEls.map(el => {
+    const e = readEntry(el);
+    return { name: e.name, dim: e.dim, type: e.type };
+  }).filter(e => e.name);
+  if (!entries.length) { toast('请先添加动作'); return; }
+  store.templates.unshift({ id: uid(), createdAt: Date.now(), title, category, entries });
+  saveTemplates();
+  refreshTemplateSelect();
+  toast(`模板「${title}」已保存`);
+}
+
+function loadTemplate(tplId) {
+  const t = store.templates.find(x => x.id === tplId);
+  if (!t) return;
+  $('#f-title').value = t.title;
+  $('#f-category').value = t.category;
+  const list = $('#entry-list');
+  list.innerHTML = '';
+  t.entries.forEach(e => list.appendChild(createEntryEl({ ...e, sets: null, reps: null, weight: null })));
+  toast(`已加载模板「${t.title}」`);
+  scheduleDraft();
+}
+
+function refreshTemplateSelect() {
+  const sel = $('#template-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">从模板创建…</option>' +
+    store.templates.map(t => `<option value="${t.id}">${esc(t.title)}</option>`).join('');
+}
+
+function fillDailyForm(date) {
+  const d = getDaily(date) || blankDaily(date);
+  $('#d-date').value = date;
+  ['weight', 'hrRest', 'hrAvg', 'hrMax', 'calActive', 'calTotal', 'steps', 'sleep', 'sleepDeep', 'rest', 'calIntake'].forEach(k => {
+    const input = $('#d-' + k);
+    if (input) input.value = (d[k] === null || d[k] === undefined) ? '' : d[k];
+  });
+  $('#d-source').value = d.source || 'manual';
+  $('#d-note').value = d.note || '';
+  $('#daily-form-title').textContent = `每日健康数据 · ${date}`;
+}
+
+function onSubmitDaily(ev) {
+  ev.preventDefault();
+  const date = $('#d-date').value;
+  if (!date) { toast('请选择日期'); return; }
+  const d = getDaily(date, true);
+  ['weight', 'hrRest', 'hrAvg', 'hrMax', 'calActive', 'calTotal', 'steps', 'sleep', 'sleepDeep', 'rest', 'calIntake'].forEach(k => {
+    d[k] = numOrNull($('#d-' + k).value);
+  });
+  d.source = $('#d-source').value;
+  d.note = $('#d-note').value.trim();
+  save();
+  renderDailyList(); renderToday();
+  toast('健康数据已保存');
+}
+
+// ============ AI ============
+function loadAISettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem(AI_SETTINGS_KEY) || '{}');
+    if (s.endpoint) $('#ai-endpoint').value = s.endpoint;
+    if (s.key) $('#ai-key').value = s.key;
+    if (s.model) $('#ai-model').value = s.model;
+  } catch (e) {}
+}
+function saveAISettings() {
+  localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify({
+    endpoint: $('#ai-endpoint').value.trim(),
+    key: $('#ai-key').value.trim(),
+    model: $('#ai-model').value.trim()
+  }));
+  toast('AI 设置已保存');
+}
+
+function buildKnowledgeContext() {
+  const entries = store.knowledge.entries.slice(0, 5);
+  if (!entries.length) return '';
+  return '【近期训练科学动态（供参考）】\n' + entries.map(e => `- [${e.source}] ${e.title}：${(e.summary || '').slice(0, 120)}`).join('\n') + '\n';
+}
+
+function buildAIPrompt(rangeDays, focus) {
+  const end = todayStr();
+  const start = addDays(end, -(rangeDays - 1));
+  const inRange = d => d >= start && d <= end;
+  const sessions = store.state.sessions.filter(s => inRange(s.date) && !s.deletedAt);
+  const dailyEntries = Object.entries(store.state.daily).filter(([d]) => inRange(d));
+
+  let trainBlock = '【训练记录】\n';
+  if (!sessions.length) trainBlock += '该时间段无训练记录。\n';
+  else {
+    sessions.sort((a, b) => a.date < b.date ? -1 : 1).forEach(s => {
+      trainBlock += `- ${s.date} ${s.category}${s.title ? ' / ' + s.title : ''}`;
+      if (s.partners && s.partners.length) trainBlock += `（与 ${s.partners.join('、')} 一起）`;
+      trainBlock += '：';
+      trainBlock += s.entries.map(e => `${e.name}（${describeEntry(e)}）`).join('；');
+      if (s.hrAvg) trainBlock += ` [平均心率 ${s.hrAvg} bpm]`;
+      if (s.calBurned) trainBlock += ` [消耗 ${s.calBurned} kcal]`;
+      if (s.photos && s.photos.length) trainBlock += ` [有 ${s.photos.length} 张训练照片]`;
+      trainBlock += '\n';
+    });
+  }
+
+  let healthBlock = '【健康数据】\n';
+  if (!dailyEntries.length) healthBlock += '该时间段无健康数据记录。\n';
+  else {
+    dailyEntries.sort((a, b) => a[0] < b[0] ? -1 : 1).forEach(([date, d]) => {
+      const parts = [];
+      if (d.hrRest) parts.push(`静息心率 ${d.hrRest} bpm`);
+      if (d.hrAvg) parts.push(`平均心率 ${d.hrAvg} bpm`);
+      if (d.sleep) parts.push(`睡眠 ${d.sleep} h`);
+      if (d.steps) parts.push(`步数 ${d.steps}`);
+      if (d.calActive) parts.push(`活动消耗 ${d.calActive} kcal`);
+      if (d.rest) parts.push(`恢复放松 ${d.rest} min`);
+      if (d.weight) parts.push(`体重 ${d.weight} kg`);
+      if (parts.length) healthBlock += `- ${date}：${parts.join('，')}\n`;
+    });
+  }
+
+  const prefTop = topPref(10).map(p => `${p.name}(${p.cnt}次)`).join('、') || '暂无';
+  const knowledgeCtx = buildKnowledgeContext();
+
+  const systemPrompt = `你是一名专业的运动科学教练，熟悉 ACSM 与 NSCA 的训练指南，尤其了解 ACSM 2026 年抗阻训练指南中「RIR 优于 1RM 百分比」与「80% 1RM 区间对力量增长最有效」等结论。
+
+分析要求：
+1. 训练量与频率：评估训练频率、总组数、容量变化是否合理。
+2. 强度与恢复：结合心率、睡眠、恢复时间，判断是否存在过度训练或恢复不足。
+3. 训练结构平衡性：检查力量、有氧、爆发力、柔韧、平衡各维度占比是否均衡。
+4. 偏好分析：结合高频动作，判断是否存在肌群或模式偏科。
+5. 训练搭子与社交因素：如果用户有训练搭子，简要评估伙伴关系对坚持性的影响。
+6. 可操作建议：给出未来 1–2 周的具体调整方向。
+7. 若参考了近期训练科学动态，请简要说明依据。
+
+请用中文输出，结构清晰，分点论述。数据不足时明确说明，不要编造。`;
+
+  const userPrompt = `请分析以下数据（${start} 至 ${end}，共 ${rangeDays} 天）。
+
+${trainBlock}
+
+${healthBlock}
+
+【高频动作】${prefTop}
+${knowledgeCtx}
+${focus ? `【用户特别关注】${focus}` : ''}
+
+请生成分析报告。`;
+
+  return { systemPrompt, userPrompt };
+}
+
+async function runAIAnalysis() {
+  const endpoint = $('#ai-endpoint').value.trim();
+  const key = $('#ai-key').value.trim();
+  const model = $('#ai-model').value.trim();
+  const range = Number($('#ai-range').value);
+  const focus = $('#ai-focus').value.trim();
+  if (!endpoint || !key) { toast('请先填写 API Endpoint 和 Key'); return; }
+  if (!store.state.sessions.length && !Object.keys(store.state.daily).length) { toast('暂无足够数据'); return; }
+  const out = $('#ai-output');
+  out.classList.add('loading');
+  out.textContent = '正在分析…';
+  $('#ai-run').disabled = true;
+  const { systemPrompt, userPrompt } = buildAIPrompt(range, focus);
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: JSON.stringify({
+        model: model || 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.4
+      })
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}${t ? '：' + t.slice(0, 200) : ''}`);
+    }
+    const json = await res.json();
+    const content = json?.choices?.[0]?.message?.content;
+    if (!content) throw new Error('响应格式异常');
+    out.classList.remove('loading');
+    out.textContent = content;
+    store.aiHistory.unshift({ id: uid(), createdAt: Date.now(), range, focus: focus || '', content, model: model || 'gpt-4o-mini' });
+    saveAIHistory();
+    renderAIHistory();
+  } catch (err) {
+    out.classList.remove('loading');
+    out.textContent = '分析失败：' + err.message + '\n\n请检查 Endpoint 是否兼容 OpenAI Chat Completions 格式，以及 API Key 是否有效。';
+  } finally {
+    $('#ai-run').disabled = false;
+  }
+}
+
+function renderAIHistory() {
+  const wrap = $('#ai-history');
+  if (!wrap) return;
+  if (!store.aiHistory.length) {
+    wrap.innerHTML = '<p style="font-size:12.5px;color:#9ca3af;margin:0;">还没有历史分析。</p>';
+    return;
+  }
+  wrap.innerHTML = store.aiHistory.slice(0, 10).map(h => `
+    <div style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
+      <div style="display:flex;justify-content:space-between;cursor:pointer;" class="ai-hist-toggle" data-id="${h.id}">
+        <span style="color:#4f46e5;font-weight:500;">${new Date(h.createdAt).toLocaleString('zh-CN')} · 最近${h.range}天</span>
+        <span style="color:#9ca3af;font-size:12px;">▼</span>
+      </div>
+      <div class="ai-hist-body" id="hist-${h.id}" style="display:none;margin-top:8px;white-space:pre-wrap;font-size:12.5px;color:#475569;line-height:1.7;background:#f8fafc;padding:10px;border-radius:8px;">${esc(h.content)}</div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('.ai-hist-toggle').forEach(t => {
+    t.addEventListener('click', () => {
+      const body = document.getElementById('hist-' + t.dataset.id);
+      if (body) body.style.display = body.style.display === 'none' ? 'block' : 'none';
+    });
+  });
+}
+
+// ============ 知识 ============
+async function fetchDailyKnowledge(force = false) {
+  const today = todayStr();
+  if (!force && store.knowledge.lastFetched === today && store.knowledge.entries.length) {
+    return store.knowledge.entries;
+  }
+  toast('正在获取最新训练科学资讯…');
+  const results = [];
+  for (const feed of KNOWLEDGE_FEEDS) {
+    try {
+      const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(feed.url);
+      const res = await fetch(proxy);
+      if (!res.ok) continue;
+      const xml = await res.text();
+      const doc = new DOMParser().parseFromString(xml, 'text/xml');
+      const items = [...doc.querySelectorAll('item, entry')].slice(0, 3);
+      items.forEach(item => {
+        const title = item.querySelector('title')?.textContent || '';
+        const link = item.querySelector('link')?.textContent || item.querySelector('link')?.getAttribute('href') || '';
+        const pub = item.querySelector('pubDate')?.textContent || item.querySelector('updated')?.textContent || item.querySelector('published')?.textContent || '';
+        const desc = item.querySelector('description')?.textContent || item.querySelector('summary')?.textContent || item.querySelector('content')?.textContent || '';
+        results.push({
+          id: link || title,
+          title,
+          link,
+          source: feed.name,
+          pubDate: pub,
+          summary: stripHtml(desc).slice(0, 300)
+        });
+      });
+    } catch (e) { console.warn(`知识源 ${feed.name} 失败`, e); }
+  }
+  const seen = new Set();
+  const deduped = results.filter(r => { if (seen.has(r.id)) return false; seen.add(r.id); return true; })
+    .sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
+  store.knowledge.entries = deduped;
+  store.knowledge.lastFetched = today;
+  saveKnowledge();
+  renderKnowledge();
+  toast(deduped.length ? `获取到 ${deduped.length} 条资讯` : '未获取到新资讯');
+  return deduped;
+}
+
+function stripHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return (tmp.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+function renderKnowledge() {
+  const wrap = $('#knowledge-list');
+  if (!wrap) return;
+  const entries = store.knowledge.entries;
+  if (!entries.length) {
+    wrap.innerHTML = `<p class="empty">还没有获取到知识。点击右上角「刷新」拉取最新训练科学资讯。</p>`;
+    return;
+  }
+  wrap.innerHTML = entries.map(item => `
+    <div class="session" style="margin-bottom:10px;">
+      <div class="session-head">
+        <div class="session-title">
+          <span class="cat cat-0">${esc(item.source)}</span>
+          <strong style="font-size:14px;">${esc(item.title)}</strong>
+        </div>
+      </div>
+      <p style="font-size:13px;color:#6b7280;margin:6px 0;line-height:1.6;">${esc(item.summary)}</p>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:11.5px;color:#9ca3af;">${(item.pubDate || '').slice(0, 16)}</span>
+        <a href="${esc(item.link)}" target="_blank" rel="noopener" style="font-size:12.5px;color:#4f46e5;text-decoration:none;">阅读原文 →</a>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============ 导入导出 ============
+function exportAll() {
+  download(`FitLogPro_备份_${todayStr()}.json`, JSON.stringify({
+    app: 'FitLogPro', version: CURRENT_VERSION, exportedAt: new Date().toISOString(),
+    sessions: store.state.sessions, daily: store.state.daily,
+    pref: store.pref, customExercises: store.customExercises,
+    templates: store.templates, aiHistory: store.aiHistory
+  }, null, 2));
+  toast('已导出');
+}
+
+function importAll(text) {
+  const data = JSON.parse(text);
+  if (data.sessions || data.daily) {
+    if (!confirm('导入将覆盖当前数据，确定继续吗？')) return;
+    store.state.sessions = Array.isArray(data.sessions) ? data.sessions : [];
+    store.state.daily = data.daily || {};
+    if (data.pref) Object.assign(store.pref, data.pref);
+    if (data.customExercises) Object.assign(store.customExercises, data.customExercises);
+    if (data.templates) store.templates = data.templates;
+    if (data.aiHistory) store.aiHistory = data.aiHistory;
+    save(); savePref(); saveCustom(); saveTemplates(); saveAIHistory();
+    renderAll(); refreshTemplateSelect();
+    toast('导入完成');
+  } else if (Array.isArray(data)) {
+    data.forEach(row => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(row.date || '')) return;
+      const d = getDaily(row.date, true);
+      ['steps', 'hrRest', 'hrAvg', 'hrMax', 'sleep', 'calActive', 'rest', 'weight', 'calIntake'].forEach(k => {
+        if (row[k] != null) d[k] = Number(row[k]);
+      });
+    });
+    save(); renderAll(); toast('健康数据已导入');
+  } else toast('无法识别的格式');
+}
+
+// ============ 更多菜单 ============
+function openMoreSheet() {
+  const mask = document.createElement('div');
+  mask.className = 'sheet-mask';
+  mask.innerHTML = `<div class="sheet">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;text-align:center;">
+      ${[{v:'health',i:'❤️',l:'健康'},{v:'trend',i:'📈',l:'趋势'},{v:'ai',i:'🤖',l:'AI 分析'},{v:'knowledge',i:'📚',l:'知识'},{v:'settings',i:'⚙️',l:'设置'}]
+        .map(x => `<button type="button" data-go="${x.v}" style="border:none;background:#f8fafc;border-radius:12px;padding:16px 6px;font-size:13px;cursor:pointer;font-family:inherit;">
+          <div style="font-size:24px;margin-bottom:4px;">${x.i}</div>${x.l}</button>`).join('')}
+    </div>
+    <button type="button" class="btn ghost" style="width:100%;margin-top:14px;" id="sheet-close">关闭</button>
+  </div>`;
+  document.body.appendChild(mask);
+  mask.addEventListener('click', e => { if (e.target === mask) mask.remove(); });
+  mask.querySelectorAll('[data-go]').forEach(btn => {
+    btn.addEventListener('click', () => { switchView(btn.dataset.go); mask.remove(); });
+  });
+  mask.querySelector('#sheet-close').onclick = () => mask.remove();
+}
+
+// ============ 事件绑定 ============
+function bindEvents() {
+  $('#tabs').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (b) switchView(b.dataset.view);
+  });
+  $('#bottom-nav').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.view === 'more') openMoreSheet();
+    else switchView(b.dataset.view);
+  });
+
+  $('#today-edit').addEventListener('click', () => { fillDailyForm(todayStr()); switchView('health'); });
+
+  $('#session-form').addEventListener('submit', onSubmitSession);
+  $('#session-form').addEventListener('input', scheduleDraft);
+  $('#session-form').addEventListener('change', scheduleDraft);
+  $('#cancel-edit').addEventListener('click', () => resetSessionForm());
+  $('#add-entry').addEventListener('click', () => {
+    const el = createEntryEl();
+    $('#entry-list').appendChild(el);
+    el.querySelector('.e-name').focus();
+  });
+  $('#entry-list').addEventListener('click', e => {
+    if (e.target.closest('.e-del')) e.target.closest('.entry').remove();
+  });
+  $('#filter-category').addEventListener('change', renderList);
+  $('#save-template').addEventListener('click', saveAsTemplate);
+  $('#template-select').addEventListener('change', e => {
+    if (e.target.value) { loadTemplate(e.target.value); e.target.value = ''; }
+  });
+
+  $('#photo-input').addEventListener('change', e => {
+    const files = e.target.files;
+    if (files && files.length) handlePhotoSelect(files);
+    e.target.value = '';
+  });
+
+  $('#session-list').addEventListener('click', e => {
+    const thumb = e.target.closest('.session-photos .thumb');
+    if (thumb) {
+      const s = store.state.sessions.find(x => x.id === thumb.dataset.sid);
+      if (s && s.photos) {
+        const idx = Number(thumb.dataset.pidx) || 0;
+        openPhotoViewer(s.photos.map(p => ({ data: p.data, caption: p.caption, meta: s.date + (s.title ? ' · ' + s.title : '') })), idx);
+      }
+      return;
+    }
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const el = e.target.closest('.session');
+    if (!el) return;
+    if (btn.classList.contains('del')) deleteSession(el.dataset.id);
+    else if (btn.classList.contains('edit')) { startEditSession(el.dataset.id); switchView('train'); }
+  });
+
+  $('#daily-form').addEventListener('submit', onSubmitDaily);
+  $('#daily-clear').addEventListener('click', () => fillDailyForm($('#d-date').value || todayStr()));
+  $('#d-date').addEventListener('change', e => { if (e.target.value) fillDailyForm(e.target.value); });
+  $('#daily-list').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const el = e.target.closest('.session');
+    if (!el) return;
+    const date = el.dataset.date;
+    if (btn.classList.contains('d-edit')) { fillDailyForm(date); switchView('health'); }
+    else if (btn.classList.contains('d-del')) {
+      if (confirm(`删除 ${date} 的健康数据？`)) { delete store.state.daily[date]; save(); renderDailyList(); renderToday(); }
+    }
+  });
+
+  $('#trend-metric').addEventListener('change', renderTrend);
+  $('#trend-range').addEventListener('change', renderTrend);
+  $('#trend-exercise').addEventListener('change', renderTrend);
+
+  $('#ai-run').addEventListener('click', runAIAnalysis);
+  $('#ai-save-key').addEventListener('click', saveAISettings);
+
+  $('#knowledge-refresh').addEventListener('click', () => fetchDailyKnowledge(true));
+
+  $('#custom-ex-add').addEventListener('click', () => {
+    const name = $('#custom-ex-name').value.trim();
+    const dim = $('#custom-ex-dim').value;
+    if (!name) { toast('请输入动作名称'); return; }
+    store.customExercises[name] = dim;
+    saveCustom(); updateDatalist();
+    $('#custom-ex-name').value = '';
+    renderSettings();
+    toast('已添加自定义动作');
+  });
+  $('#custom-ex-list').addEventListener('click', e => {
+    const t = e.target.closest('[data-del-custom]');
+    if (t) {
+      delete store.customExercises[t.dataset.delCustom];
+      saveCustom(); updateDatalist(); renderSettings();
+    }
+  });
+
+  $('#btn-export').addEventListener('click', exportAll);
+  $('#btn-export2').addEventListener('click', exportAll);
+  $('#file-import').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { try { importAll(String(r.result)); } catch (err) { toast('导入失败：' + err.message); } };
+    r.readAsText(f);
+    e.target.value = '';
+  });
+
+  $('#btn-clear').addEventListener('click', () => {
+    if (!confirm('确定清空全部数据吗？建议先导出备份。')) return;
+    store.state = { sessions: [], daily: {}, hrLog: [] };
+    store.pref = { dimCount: {}, exCount: {}, lastUsed: {} };
+    store.customExercises = {};
+    store.templates = [];
+    store.aiHistory = [];
+    save(); savePref(); saveCustom(); saveTemplates(); saveAIHistory();
+    resetSessionForm(); fillDailyForm(todayStr());
+    refreshTemplateSelect();
+    renderAll();
+    toast('已清空');
+  });
+
+  // 照片查看器
+  $('#pv-close').addEventListener('click', closePhotoViewer);
+  $('#pv-prev').addEventListener('click', viewerPrev);
+  $('#pv-next').addEventListener('click', viewerNext);
+  document.addEventListener('keydown', e => {
+    if (!$('#photo-viewer').classList.contains('show')) return;
+    if (e.key === 'Escape') closePhotoViewer();
+    else if (e.key === 'ArrowLeft') viewerPrev();
+    else if (e.key === 'ArrowRight') viewerNext();
+  });
+
+  let rt;
+  window.addEventListener('resize', () => {
+    clearTimeout(rt);
+    rt = setTimeout(() => { if ($('#view-trend').classList.contains('active')) renderTrend(); }, 160);
+  });
+}
+
+// ============ 初始化 ============
+function init() {
+  loadAll();
+  bindEvents();
+  $('#f-date').value = todayStr();
+  fillDailyForm(todayStr());
+  $('#entry-list').appendChild(createEntryEl());
+  updatePhotoCount();
+  updateDatalist();
+  refreshTemplateSelect();
+  renderAll();
+
+  setTimeout(() => restoreDraft(), 120);
+
+  const hash = location.hash.replace('#', '');
+  if (['today', 'train', 'health', 'trend', 'timeline', 'ai', 'knowledge', 'settings'].includes(hash)) {
+    switchView(hash);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>
